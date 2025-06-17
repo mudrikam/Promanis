@@ -1,0 +1,5 @@
+# Mudrikam Launcher Dependencies
+pyside6>=6.0.0
+pillow>=9.0.0
+qtawesome>=1.0.0
+requests>=2.25.0
