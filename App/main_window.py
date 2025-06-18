@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
-                               QTextEdit, QPushButton, QProgressBar, QLabel, QMessageBox, QComboBox, QSpacerItem, QSizePolicy, QFrame)
+                               QTextEdit, QPushButton, QProgressBar, QLabel, QMessageBox, QComboBox, QSpacerItem, QSizePolicy, QFrame, QGroupBox, QGridLayout)
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QFont, QGuiApplication, QDesktopServices
 import qtawesome as qta
@@ -7,6 +7,40 @@ from .api_manager import APIKeyManager
 from .gemini_worker import PromptRefinementWorker
 from .settings_dialog import SettingsDialog
 import re
+import json
+from pathlib import Path
+
+DEFAULT_AI_PLATFORMS = {
+    "ChatGPT (OpenAI)": "https://chat.openai.com/",
+    "Gemini (Google)": "https://gemini.google.com/app",
+    "Claude (Anthropic)": "https://claude.ai/",
+    "Copilot (Microsoft)": "https://copilot.microsoft.com/",
+    "Perplexity": "https://www.perplexity.ai/",
+    "Midjourney": "https://www.midjourney.com/app/",
+    "DALL-E": "https://labs.openai.com/",
+    "Suno AI": "https://app.suno.ai/",
+    "Stable Diffusion": "https://stablediffusionweb.com/",
+    "Pika Labs": "https://pika.art/",
+    "Sora (OpenAI)": "https://openai.com/sora",
+    "Google Bard": "https://bard.google.com/",
+    "You.com": "https://you.com/",
+    "Cohere": "https://chat.cohere.com/",
+    "Mistral": "https://chat.mistral.ai/",
+    "Llama 3 (Meta)": "https://llama.meta.com/",
+    "Other / Custom": ""
+}
+
+def load_ai_platforms_from_config(base_dir):
+    config_path = Path(base_dir) / "App" / "config" / "config.json"
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+            ai_platforms = config.get("ai_platforms", None)
+            if isinstance(ai_platforms, dict) and ai_platforms:
+                return ai_platforms
+    except Exception:
+        pass
+    return DEFAULT_AI_PLATFORMS
 
 class PromanisMainWindow(QMainWindow):
     def __init__(self, base_dir):
@@ -14,6 +48,7 @@ class PromanisMainWindow(QMainWindow):
         self.base_dir = base_dir
         self.api_manager = APIKeyManager(base_dir)
         self.worker = None
+        self.ai_platforms = load_ai_platforms_from_config(self.base_dir)
         self.init_ui()
     
     def init_ui(self):
@@ -25,7 +60,6 @@ class PromanisMainWindow(QMainWindow):
         
         main_layout = QVBoxLayout(central_widget)
         
-        # Header with icon, left-aligned
         header_layout = QHBoxLayout()
         header_icon = QLabel()
         header_icon.setPixmap(qta.icon('fa6s.wand-sparkles', color='#1976D2').pixmap(28, 28))
@@ -40,7 +74,6 @@ class PromanisMainWindow(QMainWindow):
         header_layout.addStretch()
         main_layout.addLayout(header_layout)
 
-        # Description under header
         self.desc_label = QLabel("Promanis helps you rewrite, enhance, and structure your AI prompts for better results. "
                             "Paste your raw prompt, add context if needed, and let Promanis generate a refined, ready-to-use prompt for any AI model (text, image, audio, video, etc).")
         self.desc_label.setWordWrap(True)
@@ -48,33 +81,47 @@ class PromanisMainWindow(QMainWindow):
         self.desc_label.setStyleSheet("color: #555; font-size: 11pt; margin-bottom: 8px;")
         main_layout.addWidget(self.desc_label)
 
-        # --- Top: Compact Toolbar-like Options Frame ---
-        options_frame = QFrame()
-        options_frame.setFrameShape(QFrame.StyledPanel)
-        options_hlayout = QHBoxLayout(options_frame)
-        options_hlayout.setSpacing(12)
-        options_hlayout.setContentsMargins(8, 4, 8, 4)
+        # --- Top: Ribbon-style Grouped Options ---
+        ribbon_frame = QFrame()
+        ribbon_frame.setFrameShape(QFrame.StyledPanel)
+        ribbon_layout = QHBoxLayout(ribbon_frame)
+        ribbon_layout.setSpacing(16)
+        ribbon_layout.setContentsMargins(8, 8, 8, 8)
+        ribbon_layout.setAlignment(Qt.AlignTop)
 
-        # Language
+        group_style = (
+            "QGroupBox {"
+            " border: none;"
+            " margin-top: 0px;"
+            " padding: 14px 0 14px 0;"
+            " background-color: rgba(153,153,153,0.07);"
+            " border-radius: 12px;"
+            "}"
+        )
+
+        # Group 1: Language
+        lang_group = QGroupBox("Language")
+        lang_group.setStyleSheet(group_style)
+        lang_layout = QHBoxLayout(lang_group)
+        lang_layout.setAlignment(Qt.AlignTop)
         lang_icon = QLabel()
         lang_icon.setPixmap(qta.icon('fa6s.language', color='#1976D2').pixmap(18, 18))
-        options_hlayout.addWidget(lang_icon)
-        self.language_label = QLabel("Language:")
-        self.language_label.setFont(QFont("Arial", 10, QFont.Bold))
-        options_hlayout.addWidget(self.language_label)
+        lang_layout.addWidget(lang_icon)
         self.language_combo = QComboBox()
         self.language_combo.addItems(["English", "Bahasa Indonesia"])
         self.language_combo.setCurrentText("English")
         self.language_combo.currentTextChanged.connect(self.on_language_changed)
-        options_hlayout.addWidget(self.language_combo)
+        lang_layout.addWidget(self.language_combo)
+        ribbon_layout.addWidget(lang_group, alignment=Qt.AlignTop)
 
-        # Scope
+        # Group 2: Scope & Type
+        scope_type_group = QGroupBox("Scope & Type")
+        scope_type_group.setStyleSheet(group_style)
+        scope_type_layout = QGridLayout(scope_type_group)
+        scope_type_layout.setAlignment(Qt.AlignTop)
         scope_icon = QLabel()
         scope_icon.setPixmap(qta.icon('fa6s.layer-group', color='#388E3C').pixmap(18, 18))
-        options_hlayout.addWidget(scope_icon)
-        self.scope_label = QLabel("Scope:")
-        self.scope_label.setFont(QFont("Arial", 10, QFont.Bold))
-        options_hlayout.addWidget(self.scope_label)
+        scope_type_layout.addWidget(scope_icon, 0, 0, alignment=Qt.AlignTop)
         self.scope_combo = QComboBox()
         self.scope_combo.addItems([
             "General", "Programming", "Novel", "Science", "Math", "Education", "History", "Philosophy",
@@ -86,15 +133,10 @@ class PromanisMainWindow(QMainWindow):
             "AI/ML", "Engineering", "Environment", "Politics", "Sports", "Other"
         ])
         self.scope_combo.setCurrentText("General")
-        options_hlayout.addWidget(self.scope_combo)
-
-        # Type
+        scope_type_layout.addWidget(self.scope_combo, 0, 1, alignment=Qt.AlignTop)
         type_icon = QLabel()
         type_icon.setPixmap(qta.icon('fa6s.shapes', color='#F9A825').pixmap(18, 18))
-        options_hlayout.addWidget(type_icon)
-        self.type_label = QLabel("Type:")
-        self.type_label.setFont(QFont("Arial", 10, QFont.Bold))
-        options_hlayout.addWidget(self.type_label)
+        scope_type_layout.addWidget(type_icon, 1, 0, alignment=Qt.AlignTop)
         self.type_combo = QComboBox()
         self.type_combo.addItems([
             "Text Generation",
@@ -107,28 +149,61 @@ class PromanisMainWindow(QMainWindow):
             "Other"
         ])
         self.type_combo.setCurrentText("Text Generation")
-        options_hlayout.addWidget(self.type_combo)
+        scope_type_layout.addWidget(self.type_combo, 1, 1, alignment=Qt.AlignTop)
+        ribbon_layout.addWidget(scope_type_group, alignment=Qt.AlignTop)
 
-        # Detail
+        # Group 3: Detail
+        detail_group = QGroupBox("Detail")
+        detail_group.setStyleSheet(group_style)
+        detail_layout = QHBoxLayout(detail_group)
+        detail_layout.setAlignment(Qt.AlignTop)
         detail_icon = QLabel()
         detail_icon.setPixmap(qta.icon('fa6s.list', color='#D32F2F').pixmap(18, 18))
-        options_hlayout.addWidget(detail_icon)
-        self.detail_label = QLabel("Detail:")
-        self.detail_label.setFont(QFont("Arial", 10, QFont.Bold))
-        options_hlayout.addWidget(self.detail_label)
+        detail_layout.addWidget(detail_icon)
         self.detail_combo = QComboBox()
         self.detail_combo.addItems(["Simple", "Detailed", "Complex", "Template"])
         self.detail_combo.setCurrentText("Detailed")
-        options_hlayout.addWidget(self.detail_combo)
+        detail_layout.addWidget(self.detail_combo)
+        ribbon_layout.addWidget(detail_group, alignment=Qt.AlignTop)
 
-        options_hlayout.addStretch()
-        main_layout.addWidget(options_frame)
+        # Group 4: Platform
+        platform_group = QGroupBox("Platform")
+        platform_group.setStyleSheet(group_style)
+        platform_layout = QHBoxLayout(platform_group)
+        platform_layout.setAlignment(Qt.AlignTop)
+        platform_icon = QLabel()
+        platform_icon.setPixmap(qta.icon('fa6s.robot', color='#8e24aa').pixmap(18, 18))
+        platform_layout.addWidget(platform_icon)
+        self.platform_combo = QComboBox()
+        self.platform_combo.addItems(list(self.ai_platforms.keys()))
+        self.platform_combo.setCurrentText("ChatGPT (OpenAI)")
+        platform_layout.addWidget(self.platform_combo)
+        self.open_platform_button = QPushButton("Buka Platform")
+        self.open_platform_button.setIcon(qta.icon('fa6s.arrow-up-right-from-square', color='white'))
+        self.open_platform_button.setStyleSheet("""
+            QPushButton {
+                background-color: #8e24aa;
+                border: none;
+                color: white;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #6d1b7b;
+            }
+        """)
+        self.open_platform_button.clicked.connect(self.open_selected_platform)
+        platform_layout.addWidget(self.open_platform_button)
+        ribbon_layout.addWidget(platform_group, alignment=Qt.AlignTop)
+
+        ribbon_layout.addStretch()
+        main_layout.addWidget(ribbon_frame)
 
         # --- Actions Layout (compact, right-aligned) ---
         actions_layout = QHBoxLayout()
         actions_layout.addStretch()
         
-        # Configuration button
         self.config_button = QPushButton()
         self.config_button.setText("Settings")
         self.config_button.setIcon(qta.icon('fa6s.gear', color='white'))
@@ -205,7 +280,6 @@ class PromanisMainWindow(QMainWindow):
         self.copy_button.clicked.connect(self.copy_refined_prompt)
         actions_layout.addWidget(self.copy_button)
 
-        # WhatsApp button
         self.wa_button = QPushButton()
         self.wa_button.setText("WA Group")
         self.wa_button.setIcon(qta.icon('fa6b.whatsapp', color='white'))
@@ -226,18 +300,14 @@ class PromanisMainWindow(QMainWindow):
 
         main_layout.addLayout(actions_layout)
 
-        # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         main_layout.addWidget(self.progress_bar)
 
-        # Before/After layout - horizontal
         content_layout = QHBoxLayout()
         
-        # Left side - Input (Before)
         left_layout = QVBoxLayout()
 
-        # Raw Prompt Label with Icon (left-aligned)
         input_label_layout = QHBoxLayout()
         input_icon = QLabel()
         input_icon.setPixmap(qta.icon('fa6s.pen-to-square', color='#1976D2').pixmap(20, 20))
@@ -262,7 +332,6 @@ class PromanisMainWindow(QMainWindow):
         """)
         left_layout.addWidget(self.input_text)
 
-        # Context Label with Icon (left-aligned)
         context_label_layout = QHBoxLayout()
         context_icon = QLabel()
         context_icon.setPixmap(qta.icon('fa6s.circle-info', color='#388E3C').pixmap(20, 20))
@@ -289,10 +358,8 @@ class PromanisMainWindow(QMainWindow):
         
         content_layout.addLayout(left_layout)
         
-        # Right side - Output
         right_output_layout = QVBoxLayout()
 
-        # Refined Prompt Label with Icon (left-aligned)
         output_label_layout = QHBoxLayout()
         output_icon = QLabel()
         output_icon.setPixmap(qta.icon('fa6s.wand-sparkles', color='#F9A825').pixmap(20, 20))
@@ -321,7 +388,6 @@ class PromanisMainWindow(QMainWindow):
         
         main_layout.addLayout(content_layout)
 
-        # Status bar
         self.status_label = QLabel("Ready to refine prompts")
         self.status_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.status_label)
@@ -329,11 +395,30 @@ class PromanisMainWindow(QMainWindow):
         # Set initial language
         self.on_language_changed("English")
     
+    def open_selected_platform(self):
+        platform_name = self.platform_combo.currentText()
+        url = self.ai_platforms.get(platform_name, "")
+        prompt_text = self.output_text.toPlainText().strip()
+        if not prompt_text:
+            QMessageBox.warning(self, "Warning", "No refined prompt to copy and open.")
+            return
+        QGuiApplication.clipboard().setText(prompt_text)
+        if url:
+            QDesktopServices.openUrl(QUrl(url))
+            self.status_label.setText(f"Prompt copied & opening {platform_name}...")
+        else:
+            self.status_label.setText("Prompt copied to clipboard. (No URL for this platform)")
+
     def open_settings(self):
-        dialog = SettingsDialog(self.api_manager, self)
+        dialog = SettingsDialog(self.api_manager, self, ai_platforms=self.ai_platforms)
         if dialog.exec():
             try:
                 self.api_manager.load_api_keys()
+                # Reload AI platforms in case user changed them
+                self.ai_platforms = load_ai_platforms_from_config(self.base_dir)
+                self.platform_combo.clear()
+                self.platform_combo.addItems(list(self.ai_platforms.keys()))
+                self.platform_combo.setCurrentText("ChatGPT (OpenAI)")
                 current_language = self.language_combo.currentText()
                 if current_language == "Bahasa Indonesia":
                     self.status_label.setText("Pengaturan berhasil disimpan!")
@@ -348,19 +433,22 @@ class PromanisMainWindow(QMainWindow):
     
     def on_language_changed(self, language):
         if language == "Bahasa Indonesia":
-            # Update UI elements
             self.setWindowTitle("Promanis - Penyempurna Prompt AI")
             self.header_label.setText("Promanis - Penyempurna Prompt AI")
             self.desc_label.setText("Promanis membantu Anda menulis ulang, meningkatkan, dan menyusun prompt AI Anda untuk hasil yang lebih baik. "
                                    "Tempel prompt mentah Anda, tambahkan konteks jika diperlukan, dan biarkan Promanis menghasilkan prompt yang disempurnakan dan siap pakai untuk model AI apa pun (teks, gambar, audio, video, dll).")
-            
-            # Update option labels
-            self.language_label.setText("Bahasa:")
-            self.scope_label.setText("Cakupan:")
-            self.type_label.setText("Jenis:")
-            self.detail_label.setText("Detail:")
-            
-            # Update scope options
+            lang_group = self.findChild(QGroupBox, "Language")
+            if lang_group:
+                lang_group.setTitle("Bahasa")
+            scope_type_group = self.findChild(QGroupBox, "Scope & Type")
+            if scope_type_group:
+                scope_type_group.setTitle("Cakupan & Jenis")
+            detail_group = self.findChild(QGroupBox, "Detail")
+            if detail_group:
+                detail_group.setTitle("Detail")
+            platform_group = self.findChild(QGroupBox, "Platform")
+            if platform_group:
+                platform_group.setTitle("Platform")
             scope_items_id = [
                 "Umum", "Pemrograman", "Novel", "Sains", "Matematika", "Pendidikan", "Sejarah", "Filsafat",
                 "Bisnis", "Pemasaran", "Hukum", "Medis", "Penulisan Teknis", "Seni", "Musik", "Puisi",
@@ -374,8 +462,6 @@ class PromanisMainWindow(QMainWindow):
             self.scope_combo.clear()
             self.scope_combo.addItems(scope_items_id)
             self.scope_combo.setCurrentIndex(current_scope_index)
-            
-            # Update type options
             type_items_id = [
                 "Generasi Teks",
                 "Generasi Gambar", 
@@ -390,45 +476,41 @@ class PromanisMainWindow(QMainWindow):
             self.type_combo.clear()
             self.type_combo.addItems(type_items_id)
             self.type_combo.setCurrentIndex(current_type_index)
-            
-            # Update detail options
             detail_items_id = ["Sederhana", "Detail", "Kompleks", "Template"]
             current_detail_index = self.detail_combo.currentIndex()
             self.detail_combo.clear()
             self.detail_combo.addItems(detail_items_id)
             self.detail_combo.setCurrentIndex(current_detail_index)
-            
-            # Update labels and placeholders
             self.input_label.setText("Prompt Mentah (Sebelum):")
             self.output_label.setText("Prompt Matang (Sesudah):")
             self.input_text.setPlaceholderText("Masukkan prompt mentah Anda di sini...")
             self.output_text.setPlaceholderText("Prompt yang sudah disempurnakan akan muncul di sini...")
             self.context_label.setText("Konteks (Opsional):")
             self.context_text.setPlaceholderText("Tambahkan konteks atau informasi latar belakang di sini (opsional)...")
-            
-            # Update buttons
             self.run_button.setText("Sempurnakan Prompt")
             self.clear_button.setText("Bersihkan Semua")
             self.copy_button.setText("Salin Prompt Matang")
             self.config_button.setText("Pengaturan")
             self.wa_button.setText("Grup WA")
-            
-            # Update status
+            self.open_platform_button.setText("Buka Platform")
             self.status_label.setText("Siap untuk menyempurnakan prompt")
         else:
-            # Update UI elements to English
             self.setWindowTitle("Promanis - AI Prompt Refiner")
             self.header_label.setText("Promanis - AI Prompt Refiner")
             self.desc_label.setText("Promanis helps you rewrite, enhance, and structure your AI prompts for better results. "
                                    "Paste your raw prompt, add context if needed, and let Promanis generate a refined, ready-to-use prompt for any AI model (text, image, audio, video, etc).")
-            
-            # Update option labels
-            self.language_label.setText("Language:")
-            self.scope_label.setText("Scope:")
-            self.type_label.setText("Type:")
-            self.detail_label.setText("Detail:")
-            
-            # Update scope options
+            lang_group = self.findChild(QGroupBox, "Language")
+            if lang_group:
+                lang_group.setTitle("Language")
+            scope_type_group = self.findChild(QGroupBox, "Scope & Type")
+            if scope_type_group:
+                scope_type_group.setTitle("Scope & Type")
+            detail_group = self.findChild(QGroupBox, "Detail")
+            if detail_group:
+                detail_group.setTitle("Detail")
+            platform_group = self.findChild(QGroupBox, "Platform")
+            if platform_group:
+                platform_group.setTitle("Platform")
             scope_items_en = [
                 "General", "Programming", "Novel", "Science", "Math", "Education", "History", "Philosophy",
                 "Business", "Marketing", "Legal", "Medical", "Technical Writing", "Art", "Music", "Poetry",
@@ -442,8 +524,6 @@ class PromanisMainWindow(QMainWindow):
             self.scope_combo.clear()
             self.scope_combo.addItems(scope_items_en)
             self.scope_combo.setCurrentIndex(current_scope_index)
-            
-            # Update type options
             type_items_en = [
                 "Text Generation",
                 "Image Generation",
@@ -458,30 +538,23 @@ class PromanisMainWindow(QMainWindow):
             self.type_combo.clear()
             self.type_combo.addItems(type_items_en)
             self.type_combo.setCurrentIndex(current_type_index)
-            
-            # Update detail options
             detail_items_en = ["Simple", "Detailed", "Complex", "Template"]
             current_detail_index = self.detail_combo.currentIndex()
             self.detail_combo.clear()
             self.detail_combo.addItems(detail_items_en)
             self.detail_combo.setCurrentIndex(current_detail_index)
-            
-            # Update labels and placeholders
             self.input_label.setText("Raw Prompt (Before):")
             self.output_label.setText("Refined Prompt (After):")
             self.input_text.setPlaceholderText("Enter your raw prompt here...")
             self.output_text.setPlaceholderText("Refined prompt will appear here...")
             self.context_label.setText("Context (Optional):")
             self.context_text.setPlaceholderText("Add any context or background information here (optional)...")
-            
-            # Update buttons
             self.run_button.setText("Refine Prompt")
             self.clear_button.setText("Clear All")
             self.copy_button.setText("Copy Refined Prompt")
             self.config_button.setText("Settings")
             self.wa_button.setText("WA Group")
-            
-            # Update status
+            self.open_platform_button.setText("Open Platform")
             self.status_label.setText("Ready to refine prompts")
     
     def refine_prompt(self):
@@ -549,6 +622,37 @@ class PromanisMainWindow(QMainWindow):
     
     def reset_ui(self):
         self.run_button.setEnabled(True)
+        self.progress_bar.setVisible(False)
+        if self.worker:
+            self.worker.quit()
+            self.worker.wait()
+            self.worker = None
+    
+    def clear_all(self):
+        self.input_text.clear()
+        self.output_text.clear()
+        self.context_text.clear()
+        current_language = self.language_combo.currentText()
+        if current_language == "Bahasa Indonesia":
+            self.status_label.setText("Siap untuk menyempurnakan prompt")
+        else:
+            self.status_label.setText("Ready to refine prompts")
+
+    def copy_refined_prompt(self):
+        text = self.output_text.toPlainText()
+        if text.strip():
+            QGuiApplication.clipboard().setText(text)
+            current_language = self.language_combo.currentText()
+            if current_language == "Bahasa Indonesia":
+                self.status_label.setText("Prompt matang berhasil disalin ke clipboard!")
+            else:
+                self.status_label.setText("Refined prompt copied to clipboard!")
+        else:
+            current_language = self.language_combo.currentText()
+            if current_language == "Bahasa Indonesia":
+                QMessageBox.information(self, "Info", "Tidak ada prompt matang untuk disalin.")
+            else:
+                QMessageBox.information(self, "Info", "No refined prompt to copy.")
         self.progress_bar.setVisible(False)
         if self.worker:
             self.worker.quit()

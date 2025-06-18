@@ -335,7 +335,7 @@ call :EchoColor "%CYAN%=========================================================
 call :EchoColor "%CYAN%              Mudrikam Launcher v.1.0.0%RESET%"
 call :EchoColor "%CYAN%           Universal Python Application Launcher%RESET%"
 call :EchoColor "%CYAN%=================================================================%RESET%"
-call :EchoColor "%GREEN%    Compatible with Windows 7/8/10/11 and multiple Python versions%RESET%"
+call :EchoColor "%GREEN%    Compatible with Windows 8/10/11 and multiple Python versions%RESET%"
 call :EchoColor "%YELLOW%                        MIT Licensed%RESET%"
 exit /b 0
 
