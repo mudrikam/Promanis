@@ -1,67 +1,80 @@
-# Promanis - Penyempurna Prompt AI
+# Promanis ![Windows](https://img.shields.io/badge/Windows-10%2F11-blue) ![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
-Aplikasi untuk memperbaiki prompt ChatGPT, Midjourney, DALL-E, dan AI lainnya.
+Promanis adalah aplikasi desktop untuk menyempurnakan prompt AI (ChatGPT, Midjourney, DALL-E, dsb) secara otomatis, cepat, dan mudah.
 
-## ✨ Fitur
+---
+
+## 🚀 Fitur Utama
 
 - Sempurnakan prompt untuk teks, gambar, audio, atau video
-- Bisa pakai Bahasa Indonesia atau Inggris
-- Pilih dari 50+ bidang khusus
-- Pakai banyak API key Gemini sekaligus
+- Pilih Bahasa Indonesia atau Inggris
+- 50+ bidang spesialisasi (Programming, Bisnis, dsb)
+- Support banyak API key Gemini (auto-rotasi)
+- UI simpel, langsung pakai
 
-## 📋 Yang Dibutuhkan
+---
 
-- Windows 10/11
-- Internet
-- API key Google Gemini
+## 📦 Instalasi & Persiapan
 
-## 🔧 Cara Pakai (Super Cepat)
+### 1. Download & Ekstrak
 
-### 1. Download & Install
+- Download Promanis.zip di [Releases](https://github.com/mudrikam/Promanis/releases/latest)
+- Ekstrak ke folder mana saja
 
-1. Download Promanis.zip dari [sini](https://github.com/mudrikam/Promanis/releases/latest)
-2. Extract file zip ke folder mana saja
-3. Double-click file `Launcher.bat`
-   - Launcher akan otomatis menginstall semua yang dibutuhkan
+### 2. Jalankan Launcher
 
-### 2. Dapatkan API Key Gemini
+- Double-click `Launcher.bat`
+- Launcher otomatis install Python & semua kebutuhan (cukup tunggu saja)
 
-1. Kunjungi [Google AI Studio](https://ai.google.dev/)
-2. Login pakai akun Google
-3. Buat API key baru (mulai dengan "AIzaSy...")
-4. Salin API key
+### 3. Dapatkan API Key Gemini
 
-### 3. Atur API Key
+- Buka [Google AI Studio](https://ai.google.dev/)
+- Login Google, buat API key baru (format: `AIzaSy...`)
+- Copy API key
 
-1. Buat file teks bernama `api_keys.txt` di folder Promanis
-2. Paste API key Gemini di file tersebut
-3. Simpan file
+### 4. Masukkan API Key
 
-### 4. Jalankan Promanis
+- Buat file teks `api_keys.txt` di folder Promanis
+- Paste API key (satu baris satu key)
+- Simpan file
 
-1. Double-click `Launcher.bat` lagi
-2. Aplikasi akan langsung terbuka
+### 5. Jalankan Aplikasi
+
+- Double-click `Launcher.bat` lagi
+- Promanis siap digunakan
+
+---
 
 ## 💡 Cara Pakai
 
 1. Pilih bahasa (Indonesia/Inggris)
-2. Masukkan prompt mentah di kotak kiri
-3. Tambah konteks jika perlu
+2. Masukkan prompt mentah di kolom kiri
+3. (Opsional) Tambah konteks
 4. Pilih bidang, jenis, dan detail
-5. Klik "Sempurnakan Prompt"
-6. Salin hasilnya dari kotak kanan
-7. Pakai di ChatGPT, Midjourney, DALL-E, dll
-
-## 🔍 Masalah Umum
-
-- **Aplikasi tidak jalan**: Launcher.bat akan otomatis menginstall Python dan semua yang dibutuhkan
-- **Error API**: Pastikan file api_keys.txt berisi API key yang benar
-- **Error lain**: Gabung grup WA kami untuk bantuan langsung
-
-## 💬 Butuh Bantuan?
-
-[Gabung Grup WA](https://chat.whatsapp.com/CMQvDxpCfP647kBBA6dRn3)
+5. Klik **Sempurnakan Prompt**
+6. Salin hasil prompt di kolom kanan
+7. Pakai di ChatGPT, Midjourney, DALL-E, dsb
 
 ---
 
-Dibuat oleh Mudrikam Studio
+## ❓ FAQ & Bantuan
+
+- **Aplikasi tidak jalan:** Jalankan `Launcher.bat` (otomatis install semua kebutuhan)
+- **Error API:** Pastikan file `api_keys.txt` berisi API key Gemini yang valid
+- **Butuh bantuan cepat:** Gabung grup WhatsApp di bawah
+
+---
+
+## 📞 Komunitas & Support
+
+[![Join WhatsApp Group](https://img.shields.io/badge/WhatsApp-Group-green?logo=whatsapp)](https://chat.whatsapp.com/CMQvDxpCfP647kBBA6dRn3)
+
+---
+
+## ⚖️ Lisensi
+
+MIT License © Desainia Studio
+
+---
+
+> Dibuat dengan ❤️ untuk pengguna AI Indonesia.
