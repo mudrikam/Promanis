@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
                                QTextEdit, QPushButton, QProgressBar, QLabel, QMessageBox, QComboBox, QSpacerItem, QSizePolicy, QFrame, QGroupBox, QGridLayout)
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QFont, QGuiApplication, QDesktopServices
+from PySide6.QtGui import QFont, QGuiApplication, QDesktopServices, QIcon
 import qtawesome as qta
+import os
 from .api_manager import APIKeyManager
 from .gemini_worker import PromptRefinementWorker
 from .settings_dialog import SettingsDialog
@@ -46,6 +47,12 @@ class PromanisMainWindow(QMainWindow):
     def __init__(self, base_dir):
         super().__init__()
         self.base_dir = base_dir
+        # Set wand.ico as window icon for all GUI (including taskbar)
+        icon_path = os.path.join(self.base_dir, "App", "wand.ico")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+        else:
+            self.setWindowIcon(qta.icon('fa5s.magic'))
         self.api_manager = APIKeyManager(base_dir)
         self.worker = None
         self.ai_platforms = load_ai_platforms_from_config(self.base_dir)
@@ -62,7 +69,12 @@ class PromanisMainWindow(QMainWindow):
         
         header_layout = QHBoxLayout()
         header_icon = QLabel()
-        header_icon.setPixmap(qta.icon('fa6s.wand-sparkles', color='#1976D2').pixmap(28, 28))
+        # Use wand.ico as header icon if available, else fallback to qtawesome
+        icon_path = os.path.join(self.base_dir, "App", "wand.ico")
+        if os.path.exists(icon_path):
+            header_icon.setPixmap(QIcon(icon_path).pixmap(28, 28))
+        else:
+            header_icon.setPixmap(qta.icon('fa6s.wand-sparkles', color='#1976D2').pixmap(28, 28))
         header_layout.addWidget(header_icon)
         self.header_label = QLabel("Promanis - AI Prompt Refiner")
         header_font = QFont()
@@ -99,10 +111,10 @@ class PromanisMainWindow(QMainWindow):
             "}"
         )
 
-        # Group 1: Language
-        lang_group = QGroupBox("Language")
-        lang_group.setStyleSheet(group_style)
-        lang_layout = QHBoxLayout(lang_group)
+        # Store group widgets for language switching
+        self.lang_group = QGroupBox("Language")
+        self.lang_group.setStyleSheet(group_style)
+        lang_layout = QHBoxLayout(self.lang_group)
         lang_layout.setAlignment(Qt.AlignTop)
         lang_icon = QLabel()
         lang_icon.setPixmap(qta.icon('fa6s.language', color='#1976D2').pixmap(18, 18))
@@ -112,12 +124,11 @@ class PromanisMainWindow(QMainWindow):
         self.language_combo.setCurrentText("English")
         self.language_combo.currentTextChanged.connect(self.on_language_changed)
         lang_layout.addWidget(self.language_combo)
-        ribbon_layout.addWidget(lang_group, alignment=Qt.AlignTop)
+        ribbon_layout.addWidget(self.lang_group, alignment=Qt.AlignTop)
 
-        # Group 2: Scope & Type
-        scope_type_group = QGroupBox("Scope & Type")
-        scope_type_group.setStyleSheet(group_style)
-        scope_type_layout = QGridLayout(scope_type_group)
+        self.scope_type_group = QGroupBox("Scope & Type")
+        self.scope_type_group.setStyleSheet(group_style)
+        scope_type_layout = QGridLayout(self.scope_type_group)
         scope_type_layout.setAlignment(Qt.AlignTop)
         scope_icon = QLabel()
         scope_icon.setPixmap(qta.icon('fa6s.layer-group', color='#388E3C').pixmap(18, 18))
@@ -150,12 +161,12 @@ class PromanisMainWindow(QMainWindow):
         ])
         self.type_combo.setCurrentText("Text Generation")
         scope_type_layout.addWidget(self.type_combo, 1, 1, alignment=Qt.AlignTop)
-        ribbon_layout.addWidget(scope_type_group, alignment=Qt.AlignTop)
+        ribbon_layout.addWidget(self.scope_type_group, alignment=Qt.AlignTop)
 
         # Group 3: Detail
-        detail_group = QGroupBox("Detail")
-        detail_group.setStyleSheet(group_style)
-        detail_layout = QHBoxLayout(detail_group)
+        self.detail_group = QGroupBox("Detail")
+        self.detail_group.setStyleSheet(group_style)
+        detail_layout = QHBoxLayout(self.detail_group)
         detail_layout.setAlignment(Qt.AlignTop)
         detail_icon = QLabel()
         detail_icon.setPixmap(qta.icon('fa6s.list', color='#D32F2F').pixmap(18, 18))
@@ -164,12 +175,12 @@ class PromanisMainWindow(QMainWindow):
         self.detail_combo.addItems(["Simple", "Detailed", "Complex", "Template"])
         self.detail_combo.setCurrentText("Detailed")
         detail_layout.addWidget(self.detail_combo)
-        ribbon_layout.addWidget(detail_group, alignment=Qt.AlignTop)
+        ribbon_layout.addWidget(self.detail_group, alignment=Qt.AlignTop)
 
         # Group 4: Platform
-        platform_group = QGroupBox("Platform")
-        platform_group.setStyleSheet(group_style)
-        platform_layout = QHBoxLayout(platform_group)
+        self.platform_group = QGroupBox("Platform")
+        self.platform_group.setStyleSheet(group_style)
+        platform_layout = QHBoxLayout(self.platform_group)
         platform_layout.setAlignment(Qt.AlignTop)
         platform_icon = QLabel()
         platform_icon.setPixmap(qta.icon('fa6s.robot', color='#8e24aa').pixmap(18, 18))
@@ -195,7 +206,7 @@ class PromanisMainWindow(QMainWindow):
         """)
         self.open_platform_button.clicked.connect(self.open_selected_platform)
         platform_layout.addWidget(self.open_platform_button)
-        ribbon_layout.addWidget(platform_group, alignment=Qt.AlignTop)
+        ribbon_layout.addWidget(self.platform_group, alignment=Qt.AlignTop)
 
         ribbon_layout.addStretch()
         main_layout.addWidget(ribbon_frame)
@@ -432,23 +443,16 @@ class PromanisMainWindow(QMainWindow):
                     QMessageBox.critical(self, "Error", f"Failed to reload API keys: {str(e)}")
     
     def on_language_changed(self, language):
+        # Update group titles directly for both languages
         if language == "Bahasa Indonesia":
             self.setWindowTitle("Promanis - Penyempurna Prompt AI")
             self.header_label.setText("Promanis - Penyempurna Prompt AI")
             self.desc_label.setText("Promanis membantu Anda menulis ulang, meningkatkan, dan menyusun prompt AI Anda untuk hasil yang lebih baik. "
                                    "Tempel prompt mentah Anda, tambahkan konteks jika diperlukan, dan biarkan Promanis menghasilkan prompt yang disempurnakan dan siap pakai untuk model AI apa pun (teks, gambar, audio, video, dll).")
-            lang_group = self.findChild(QGroupBox, "Language")
-            if lang_group:
-                lang_group.setTitle("Bahasa")
-            scope_type_group = self.findChild(QGroupBox, "Scope & Type")
-            if scope_type_group:
-                scope_type_group.setTitle("Cakupan & Jenis")
-            detail_group = self.findChild(QGroupBox, "Detail")
-            if detail_group:
-                detail_group.setTitle("Detail")
-            platform_group = self.findChild(QGroupBox, "Platform")
-            if platform_group:
-                platform_group.setTitle("Platform")
+            self.lang_group.setTitle("Bahasa")
+            self.scope_type_group.setTitle("Cakupan & Jenis")
+            self.detail_group.setTitle("Detail")
+            self.platform_group.setTitle("Platform")
             scope_items_id = [
                 "Umum", "Pemrograman", "Novel", "Sains", "Matematika", "Pendidikan", "Sejarah", "Filsafat",
                 "Bisnis", "Pemasaran", "Hukum", "Medis", "Penulisan Teknis", "Seni", "Musik", "Puisi",
@@ -499,18 +503,10 @@ class PromanisMainWindow(QMainWindow):
             self.header_label.setText("Promanis - AI Prompt Refiner")
             self.desc_label.setText("Promanis helps you rewrite, enhance, and structure your AI prompts for better results. "
                                    "Paste your raw prompt, add context if needed, and let Promanis generate a refined, ready-to-use prompt for any AI model (text, image, audio, video, etc).")
-            lang_group = self.findChild(QGroupBox, "Language")
-            if lang_group:
-                lang_group.setTitle("Language")
-            scope_type_group = self.findChild(QGroupBox, "Scope & Type")
-            if scope_type_group:
-                scope_type_group.setTitle("Scope & Type")
-            detail_group = self.findChild(QGroupBox, "Detail")
-            if detail_group:
-                detail_group.setTitle("Detail")
-            platform_group = self.findChild(QGroupBox, "Platform")
-            if platform_group:
-                platform_group.setTitle("Platform")
+            self.lang_group.setTitle("Language")
+            self.scope_type_group.setTitle("Scope & Type")
+            self.detail_group.setTitle("Detail")
+            self.platform_group.setTitle("Platform")
             scope_items_en = [
                 "General", "Programming", "Novel", "Science", "Math", "Education", "History", "Philosophy",
                 "Business", "Marketing", "Legal", "Medical", "Technical Writing", "Art", "Music", "Poetry",
